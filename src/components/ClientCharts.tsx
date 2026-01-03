@@ -2113,8 +2113,8 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
                           {getCurrentData().map((page) => (
                             <tr key={page.id} className="border-t border-gray-200 hover:bg-gray-50">
                               <td className="px-4 py-3 text-sm text-text-dark font-medium max-w-xs">
-                                <div className="truncate" title={page.page_url}>
-                                  {page.page_url}
+                                <div className="truncate" title={(page as TopPage).page_url}>
+                                  {(page as TopPage).page_url}
                                 </div>
                               </td>
                               <td className="px-4 py-3 text-sm border-l border-gray-300">
