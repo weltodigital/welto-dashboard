@@ -2052,7 +2052,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
                           {getCurrentData().map((query) => (
                             <tr key={query.id} className="border-t border-gray-200 hover:bg-gray-50">
                               <td className="px-4 py-3 text-sm text-text-dark font-medium">
-                                {query.query}
+                                {(query as SearchQuery).query}
                               </td>
                               <td className="px-4 py-3 text-sm border-l border-gray-300">
                                 <div className="flex flex-col">
