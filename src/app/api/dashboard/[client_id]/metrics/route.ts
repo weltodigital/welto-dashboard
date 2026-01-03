@@ -113,7 +113,7 @@ export async function POST(
   } catch (error) {
     console.error('Metrics insert error:', error);
     return NextResponse.json(
-      { error: 'Database error' },
+      { error: 'Database error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

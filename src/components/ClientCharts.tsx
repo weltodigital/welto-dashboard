@@ -738,8 +738,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
         },
         body: JSON.stringify({
           metric_type: metricType,
-          metric_name: metricType,
-          value: parseFloat(newMetricValue),
+          value: parseFloat(newMetricValue) || 0,
           date: newMetricMonth
         })
       });
@@ -877,7 +876,6 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
         },
         body: JSON.stringify({
           metric_type: metric.metric_type,
-          metric_name: metric.metric_type,
           value: newValue,
           date: metric.date
         })
