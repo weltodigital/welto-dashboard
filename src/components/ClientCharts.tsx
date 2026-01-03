@@ -168,7 +168,11 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
     const keyField = activeGscTab === 'queries' ? 'query' : 'page_url';
 
     const previousItem = data.find(
-      item => item[keyField] === currentItem[keyField] && item.period === previousPeriod
+      item => {
+        const itemKey = keyField === 'query' ? (item as SearchQuery).query : (item as TopPage).page_url;
+        const currentKey = keyField === 'query' ? currentItem.query : currentItem.page_url;
+        return itemKey === currentKey && item.period === previousPeriod;
+      }
     );
 
     if (!previousItem) return null;
