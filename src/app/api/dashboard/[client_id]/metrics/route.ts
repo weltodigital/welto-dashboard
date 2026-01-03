@@ -102,13 +102,16 @@ export async function POST(
       );
     }
 
-    // Validate date format
+    // Validate date format and convert YYYY-MM to YYYY-MM-01
     if (!/^\d{4}-\d{2}$/.test(date)) {
       return NextResponse.json(
         { error: 'Invalid date format. Expected YYYY-MM format', received: date },
         { status: 400 }
       );
     }
+
+    // Convert YYYY-MM to YYYY-MM-01 for PostgreSQL date column
+    const fullDate = `${date}-01`;
 
     // Validate value is a number
     const numericValue = Number(value);
@@ -119,7 +122,7 @@ export async function POST(
       );
     }
 
-    console.log('Attempting to insert:', { client_id, metric_type, value: numericValue, date });
+    console.log('Attempting to insert:', { client_id, metric_type, value: numericValue, date: fullDate });
 
     const { data, error } = await supabase
       .from('metrics')
@@ -127,7 +130,7 @@ export async function POST(
         client_id,
         metric_type,
         value: numericValue,
-        date,
+        date: fullDate,
         created_at: new Date().toISOString()
       })
       .select();
