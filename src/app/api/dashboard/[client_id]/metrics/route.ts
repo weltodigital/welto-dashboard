@@ -4,7 +4,7 @@ import { getUserFromRequest } from '@/lib/jwt';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { client_id: string } }
+  { params }: { params: Promise<{ client_id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -16,8 +16,10 @@ export async function GET(
       );
     }
 
+    const { client_id } = await params;
+
     // Check access rights
-    if (user.role !== 'admin' && user.client_id !== params.client_id) {
+    if (user.role !== 'admin' && user.client_id !== client_id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -29,7 +31,7 @@ export async function GET(
     const startDate = url.searchParams.get('startDate');
     const endDate = url.searchParams.get('endDate');
 
-    let query = supabase.from('metrics').select('*').eq('client_id', params.client_id);
+    let query = supabase.from('metrics').select('*').eq('client_id', client_id);
 
     if (type) {
       query = query.eq('metric_type', type);

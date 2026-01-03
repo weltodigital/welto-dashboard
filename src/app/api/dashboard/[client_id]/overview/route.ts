@@ -4,7 +4,7 @@ import { getUserFromRequest } from '@/lib/jwt';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { client_id: string } }
+  { params }: { params: Promise<{ client_id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -16,8 +16,10 @@ export async function GET(
       );
     }
 
+    const { client_id } = await params;
+
     // Check access rights
-    if (user.role !== 'admin' && user.client_id !== params.client_id) {
+    if (user.role !== 'admin' && user.client_id !== client_id) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }
@@ -28,7 +30,7 @@ export async function GET(
     const { count: reportCount, error: reportError } = await supabase
       .from('reports')
       .select('*', { count: 'exact', head: true })
-      .eq('client_id', params.client_id);
+      .eq('client_id', client_id);
 
     if (reportError) {
       throw reportError;
@@ -41,7 +43,7 @@ export async function GET(
     const { data: metricsData, error: metricsError } = await supabase
       .from('metrics')
       .select('metric_type')
-      .eq('client_id', params.client_id)
+      .eq('client_id', client_id)
       .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
 
     if (metricsError) {
@@ -60,7 +62,7 @@ export async function GET(
     }));
 
     return NextResponse.json({
-      client_id: params.client_id,
+      client_id: client_id,
       reports: {
         total: reportCount || 0
       },
