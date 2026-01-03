@@ -229,7 +229,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
   const fetchClientMetrics = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${client.client_id}/data`, {
+      const response = await fetch(`/api/admin/clients/${client.client_id}/data`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -248,7 +248,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
   const fetchSearchQueries = async () => {
     try {
-      const url = `http://localhost:5001/api/admin/clients/${client.client_id}/search-queries`;
+      const url = `/api/admin/clients/${client.client_id}/search-queries`;
 
       const response = await fetch(url, {
         headers: {
@@ -267,7 +267,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
   const fetchTopPages = async () => {
     try {
-      const url = `http://localhost:5001/api/admin/clients/${client.client_id}/top-pages`;
+      const url = `/api/admin/clients/${client.client_id}/top-pages`;
 
       const response = await fetch(url, {
         headers: {
@@ -286,7 +286,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
   const fetchLeadPotential = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/dashboard/${client.client_id}/lead-potential`, {
+      const response = await fetch(`/api/dashboard/${client.client_id}/lead-potential`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -311,7 +311,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setLeadValueLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${client.id}/lead-value`, {
+      const response = await fetch(`/api/admin/clients/${client.id}/lead-value`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -353,7 +353,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setConversionRateLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${client.id}/conversion-rate`, {
+      const response = await fetch(`/api/admin/clients/${client.id}/conversion-rate`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -389,7 +389,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setReviewsStartLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${client.id}/reviews-start-count`, {
+      const response = await fetch(`/api/admin/clients/${client.id}/reviews-start-count`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -730,7 +730,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/dashboard/${client.client_id}/metrics`, {
+      const response = await fetch(`/api/dashboard/${client.client_id}/metrics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -773,7 +773,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
   const saveNotes = async () => {
     setNotesLoading(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${client.id}/notes`, {
+      const response = await fetch(`/api/admin/clients/${client.id}/notes`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -816,7 +816,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
       const formData = new FormData();
       formData.append('image', selectedFile);
 
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${client.id}/map-image`, {
+      const response = await fetch(`/api/admin/clients/${client.id}/map-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -861,7 +861,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
     setSubmitting(true);
     try {
       // Since there's no PUT endpoint, we'll delete and recreate
-      await fetch(`http://localhost:5001/api/admin/metrics/${metric.id}`, {
+      await fetch(`/api/admin/metrics/${metric.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -869,7 +869,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
       });
 
       // Add new metric with updated value
-      const response = await fetch(`http://localhost:5001/api/dashboard/${client.client_id}/metrics`, {
+      const response = await fetch(`/api/dashboard/${client.client_id}/metrics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -905,7 +905,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/metrics/${metricId}`, {
+      const response = await fetch(`/api/admin/metrics/${metricId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -948,7 +948,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
       formData.append('period', csvPeriod);
       formData.append('data_type', csvDataType);
 
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${client.client_id}/upload-csv`, {
+      const response = await fetch(`/api/admin/clients/${client.client_id}/upload-csv`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

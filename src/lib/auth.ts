@@ -16,7 +16,7 @@ interface LoginResponse {
 }
 
 class AuthService {
-  private baseURL = 'http://localhost:5001/api';
+  private baseURL = '/api';
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const response = await fetch(`${this.baseURL}/auth/login`, {

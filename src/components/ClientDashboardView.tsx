@@ -111,7 +111,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
       setLoading(true);
 
       // Fetch metrics
-      const metricsResponse = await fetch(`http://localhost:5001/api/dashboard/${clientId}/metrics`, {
+      const metricsResponse = await fetch(`/api/dashboard/${clientId}/metrics`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -121,7 +121,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
       }
 
       // Fetch search queries
-      const queriesResponse = await fetch(`http://localhost:5001/api/admin/clients/${clientId}/search-queries`, {
+      const queriesResponse = await fetch(`/api/admin/clients/${clientId}/search-queries`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -131,7 +131,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
       }
 
       // Fetch top pages
-      const pagesResponse = await fetch(`http://localhost:5001/api/admin/clients/${clientId}/top-pages`, {
+      const pagesResponse = await fetch(`/api/admin/clients/${clientId}/top-pages`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -141,7 +141,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
       }
 
       // Fetch lead potential
-      const leadResponse = await fetch(`http://localhost:5001/api/dashboard/${clientId}/lead-potential`, {
+      const leadResponse = await fetch(`/api/dashboard/${clientId}/lead-potential`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

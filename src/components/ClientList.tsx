@@ -38,7 +38,7 @@ export default function ClientList({ token }: ClientListProps) {
 
   const fetchClients = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients`, {
+      const response = await fetch(`/api/admin/clients`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -59,7 +59,7 @@ export default function ClientList({ token }: ClientListProps) {
 
   const deleteClient = async (clientId: number) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients/${clientId}`, {
+      const response = await fetch(`/api/admin/clients/${clientId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -80,7 +80,7 @@ export default function ClientList({ token }: ClientListProps) {
 
   const createClient = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/admin/clients`, {
+      const response = await fetch(`/api/admin/clients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

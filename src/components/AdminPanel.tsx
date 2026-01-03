@@ -49,7 +49,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
   }, []);
 
   const apiCall = async (url: string, options: RequestInit = {}) => {
-    const response = await fetch(`http://localhost:5001/api/admin${url}`, {
+    const response = await fetch(`/api/admin${url}`, {
       ...options,
       headers: {
         'Authorization': `Bearer ${token}`,
