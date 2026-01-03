@@ -635,7 +635,8 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
     const monthlyData: { [key: string]: ChartData } = {};
 
     metrics.forEach(metric => {
-      const month = metric.date;
+      // Convert YYYY-MM-01 back to YYYY-MM for chart display
+      const month = metric.date.substring(0, 7);
       if (!monthlyData[month]) {
         monthlyData[month] = { month };
       }
