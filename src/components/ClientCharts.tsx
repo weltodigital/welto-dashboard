@@ -424,9 +424,9 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
     setSelectedGscPeriod(period);
     setCurrentPage(1); // Reset to first page
     if (activeGscTab === 'queries') {
-      fetchSearchQueries(period || undefined);
+      fetchSearchQueries();
     } else {
-      fetchTopPages(period || undefined);
+      fetchTopPages();
     }
   }, [activeGscTab, client.client_id, token]);
 
