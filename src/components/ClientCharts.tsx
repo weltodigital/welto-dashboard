@@ -1620,7 +1620,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
               <div className="space-y-4">
                 {['gsc_organic_clicks', 'gsc_organic_impressions'].map((metricType) => {
-                  const titles = {
+                  const titles: { [key: string]: string } = {
                     'gsc_organic_clicks': 'Organic Clicks',
                     'gsc_organic_impressions': 'Organic Impressions'
                   };
