@@ -95,6 +95,7 @@ interface ChartData {
   gbp_reviews_cumulative?: number;
   gsc_organic_clicks?: number;
   gsc_organic_impressions?: number;
+  [key: string]: string | number | undefined;
 }
 
 export default function ClientDashboardView({ clientId, token }: ClientDashboardViewProps) {
