@@ -749,7 +749,8 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
         await fetchClientMetrics(); // Refresh data
       } else {
         const error = await response.json();
-        alert(`Failed to add metric: ${error.error}`);
+        console.error('API error response:', error);
+        alert(`Failed to add metric: ${error.error}${error.details ? ' - ' + error.details : ''}`);
       }
     } catch (error) {
       console.error('Error adding metric:', error);

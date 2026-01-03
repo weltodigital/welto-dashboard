@@ -85,35 +85,84 @@ export async function POST(
       );
     }
 
-    const { metric_type, value, date } = await request.json();
+    const requestBody = await request.json();
+    console.log('Received request body:', JSON.stringify(requestBody, null, 2));
+    console.log('Client ID from params:', client_id);
+    console.log('User info:', { id: user.id, role: user.role, client_id: user.client_id });
+
+    const { metric_type, value, date } = requestBody;
 
     if (!metric_type || value === undefined || !date) {
       return NextResponse.json(
-        { error: 'metric_type, value, and date are required' },
+        {
+          error: 'metric_type, value, and date are required',
+          received: { metric_type, value, date, hasMetricType: !!metric_type, hasValue: value !== undefined, hasDate: !!date }
+        },
         { status: 400 }
       );
     }
+
+    // Validate date format
+    if (!/^\d{4}-\d{2}$/.test(date)) {
+      return NextResponse.json(
+        { error: 'Invalid date format. Expected YYYY-MM format', received: date },
+        { status: 400 }
+      );
+    }
+
+    // Validate value is a number
+    const numericValue = Number(value);
+    if (isNaN(numericValue)) {
+      return NextResponse.json(
+        { error: 'Value must be a valid number', received: value },
+        { status: 400 }
+      );
+    }
+
+    console.log('Attempting to insert:', { client_id, metric_type, value: numericValue, date });
 
     const { data, error } = await supabase
       .from('metrics')
       .insert({
         client_id,
         metric_type,
-        value: Number(value),
+        value: numericValue,
         date,
         created_at: new Date().toISOString()
       })
       .select();
 
+    console.log('Insert result:', { data, error });
+
     if (error) {
-      throw error;
+      console.error('Supabase insert error:', error);
+      return NextResponse.json(
+        {
+          error: 'Database insert failed',
+          details: error.message,
+          code: error.code,
+          hint: error.hint
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return NextResponse.json(
+        { error: 'No data returned from insert' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(data[0]);
   } catch (error) {
     console.error('Metrics insert error:', error);
     return NextResponse.json(
-      { error: 'Database error', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Database error',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }
