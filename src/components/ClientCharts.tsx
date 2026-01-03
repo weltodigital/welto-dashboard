@@ -1531,7 +1531,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
               <div className="space-y-4">
                 {['gbp_calls', 'gbp_directions', 'gbp_website_clicks', 'gbp_reviews'].map((metricType) => {
-                  const titles = {
+                  const titles: { [key: string]: string } = {
                     'gbp_calls': 'Phone Calls',
                     'gbp_directions': 'Directions',
                     'gbp_website_clicks': 'Website Clicks',
