@@ -177,8 +177,8 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     if (!previousItem) return null;
 
-    const currentValue = currentItem[field];
-    const previousValue = previousItem[field];
+    const currentValue = (currentItem as any)[field];
+    const previousValue = (previousItem as any)[field];
     const change = currentValue - previousValue;
     const percentChange = previousValue !== 0 ? (change / previousValue) * 100 : 0;
 
