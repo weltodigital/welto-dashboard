@@ -229,7 +229,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
   const fetchClientMetrics = async () => {
     try {
-      const response = await fetch(`/api/admin/clients/${client.client_id}/data`, {
+      const response = await fetch(`/api/dashboard/${client.client_id}/metrics`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -237,7 +237,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
       if (response.ok) {
         const data = await response.json();
-        setMetrics(data.metrics || []);
+        setMetrics(data || []);
       }
     } catch (error) {
       console.error('Failed to fetch client metrics:', error);
