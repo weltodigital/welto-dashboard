@@ -178,12 +178,12 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
     return Array.from(dataMap.values()).sort((a, b) => a.month.localeCompare(b.month));
   }, [metrics]);
 
-  const formatTooltip = (value: any, name: string) => {
+  const formatTooltip = (value: any, name: string | undefined) => {
     const formatValue = (val: number) => {
       return val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val.toString();
     };
 
-    return [formatValue(Number(value)), name.replace(/_/g, ' ').toUpperCase()];
+    return [formatValue(Number(value)), name ? name.replace(/_/g, ' ').toUpperCase() : ''];
   };
 
   if (loading) {
