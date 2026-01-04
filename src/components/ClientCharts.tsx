@@ -1062,7 +1062,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
                   <>
                     <div className="flex-1">
                       <span className="font-medium text-text-dark">
-                        {new Date(metric.date + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        {new Date(metric.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                       </span>
                       <span className="ml-3 text-primary-blue font-semibold">{metric.value}</span>
                     </div>
@@ -1106,7 +1106,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
     return (
       <div className="flex items-center space-x-2 flex-1">
         <span className="text-sm text-text-dark">
-          {new Date(metric.date + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+          {new Date(metric.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
         </span>
         <input
           type="number"
