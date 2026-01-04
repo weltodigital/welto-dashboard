@@ -2313,11 +2313,11 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
             ) : (
               <div className="min-h-[500px]">
                 {mapImage ? (
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className="border rounded-lg overflow-hidden max-w-md">
                     <img
                       src={mapImage}
                       alt="Map Pack Position"
-                      className="w-full h-auto max-h-[700px] object-contain"
+                      className="w-full h-auto max-h-[400px] object-contain"
                     />
                   </div>
                 ) : (
