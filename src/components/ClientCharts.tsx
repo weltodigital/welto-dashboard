@@ -1017,12 +1017,14 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
         }
         setSelectedGscPeriod('');
       } else {
-        const error = await response.json();
-        throw new Error(error.error || 'Delete failed');
+        const errorData = await response.json();
+        console.error('Delete API error:', errorData);
+        throw new Error(errorData.details || errorData.error || 'Delete failed');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert(`Failed to delete ${dataTypeName} data`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to delete ${dataTypeName} data: ${errorMessage}`);
     } finally {
       setDeletingGscData(false);
     }
