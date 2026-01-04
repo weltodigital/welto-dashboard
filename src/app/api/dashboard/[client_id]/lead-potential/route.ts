@@ -51,14 +51,13 @@ export async function GET(
       );
     }
 
-    // Get the latest metrics for calculations
+    // Get all metrics for calculations
     const { data: metricsData, error: metricsError } = await supabase
       .from('metrics')
       .select('metric_type, value, date')
       .eq('client_id', client_id)
-      .in('metric_type', ['gbp_clicks', 'gsc_organic_clicks'])
-      .order('date', { ascending: false })
-      .limit(6); // Get recent data for calculations
+      .in('metric_type', ['gbp_web_clicks', 'gbp_phone_calls', 'gsc_organic_clicks'])
+      .order('date', { ascending: false });
 
     if (metricsError) {
       console.error('Error fetching metrics:', metricsError);
@@ -72,77 +71,92 @@ export async function GET(
     const lead_value = clientData.lead_value || 2500; // Default £2500
     const conversion_rate = clientData.conversion_rate || 50; // Default 50%
 
-    // Calculate monthly averages
-    const gbpClicks = metricsData?.filter(m => m.metric_type === 'gbp_clicks') || [];
+    // Get previous month (December if current month is January)
+    const now = new Date();
+    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const previousMonthStr = `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
+
+    console.log('Previous month for calculations:', previousMonthStr);
+
+    // Filter metrics by type
+    const gbpWebClicks = metricsData?.filter(m => m.metric_type === 'gbp_web_clicks') || [];
+    const gbpPhoneCalls = metricsData?.filter(m => m.metric_type === 'gbp_phone_calls') || [];
     const organicClicks = metricsData?.filter(m => m.metric_type === 'gsc_organic_clicks') || [];
 
-    const avgGbpClicks = gbpClicks.length > 0
-      ? gbpClicks.reduce((sum, m) => sum + m.value, 0) / gbpClicks.length
-      : 0;
+    // Get previous month data
+    const prevMonthGbpWeb = gbpWebClicks.find(m => m.date.startsWith(previousMonthStr))?.value || 0;
+    const prevMonthGbpPhone = gbpPhoneCalls.find(m => m.date.startsWith(previousMonthStr))?.value || 0;
+    const prevMonthOrganic = organicClicks.find(m => m.date.startsWith(previousMonthStr))?.value || 0;
 
-    const avgOrganicClicks = organicClicks.length > 0
-      ? organicClicks.reduce((sum, m) => sum + m.value, 0) / organicClicks.length
-      : 0;
+    // Calculate totals since start
+    const totalGbpWeb = gbpWebClicks.reduce((sum, m) => sum + m.value, 0);
+    const totalGbpPhone = gbpPhoneCalls.reduce((sum, m) => sum + m.value, 0);
+    const totalOrganic = organicClicks.reduce((sum, m) => sum + m.value, 0);
 
-    // Calculate potential leads and revenue
-    // Note: conversion_rate is stored as percentage (e.g., 50) but calculated as decimal (0.5)
-    const totalClicks = avgGbpClicks + avgOrganicClicks;
-    const potentialLeads = totalClicks * (conversion_rate / 100);
-    const monthlyRevenue = potentialLeads * lead_value;
-    const annualRevenue = monthlyRevenue * 12;
+    // Calculate potential leads and revenue for previous month
+    const prevMonthTotalClicks = prevMonthGbpWeb + prevMonthGbpPhone + prevMonthOrganic;
+    const prevMonthPotentialLeads = prevMonthTotalClicks * (conversion_rate / 100);
+    const prevMonthRevenue = prevMonthPotentialLeads * lead_value;
+
+    // Calculate totals since start
+    const sinceStartTotalClicks = totalGbpWeb + totalGbpPhone + totalOrganic;
+    const sinceStartPotentialLeads = sinceStartTotalClicks * (conversion_rate / 100);
+    const sinceStartRevenue = sinceStartPotentialLeads * lead_value;
 
     console.log('Lead potential calculated:', {
       lead_value,
       conversion_rate,
-      avgGbpClicks,
-      avgOrganicClicks,
-      totalClicks,
-      potentialLeads,
-      monthlyRevenue,
-      annualRevenue
+      previousMonthStr,
+      prevMonthGbpWeb,
+      prevMonthGbpPhone,
+      prevMonthOrganic,
+      prevMonthTotalClicks,
+      prevMonthRevenue,
+      sinceStartTotalClicks,
+      sinceStartRevenue
     });
 
-    // Get current month for display
-    const now = new Date();
-    const currentMonth = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-    // Calculate current month totals
-    // total_value should be the final calculated revenue, not clicks
-    const currentMonthValue = Math.round(monthlyRevenue);
-
-    // Calculate since start totals (simplified - could be enhanced with actual start date)
-    const sinceStartValue = Math.round(monthlyRevenue * 6); // Assume 6 months average
+    // Get previous month name for display
+    const previousMonthName = previousMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
     const leadPotential = {
       client_id,
       lead_value,
       conversion_rate,
       current_month: {
-        month: currentMonth,
-        total_clicks: Math.round(totalClicks),
-        total_value: currentMonthValue,
+        month: previousMonthName, // Show previous month (e.g., "December 2024")
+        total_clicks: prevMonthTotalClicks,
+        total_value: Math.round(prevMonthRevenue),
         breakdown: [
           {
-            type: 'GBP Clicks',
-            total_value: Math.round(avgGbpClicks)
+            type: 'GBP Web Clicks',
+            total_value: prevMonthGbpWeb
+          },
+          {
+            type: 'GBP Phone Calls',
+            total_value: prevMonthGbpPhone
           },
           {
             type: 'Organic Clicks',
-            total_value: Math.round(avgOrganicClicks)
+            total_value: prevMonthOrganic
           }
         ]
       },
       since_start: {
-        total_clicks: Math.round(totalClicks * 6), // Estimate 6 months
-        total_value: sinceStartValue,
+        total_clicks: sinceStartTotalClicks,
+        total_value: Math.round(sinceStartRevenue),
         breakdown: [
           {
-            type: 'GBP Clicks',
-            total_value: Math.round(avgGbpClicks * 6)
+            type: 'GBP Web Clicks',
+            total_value: totalGbpWeb
+          },
+          {
+            type: 'GBP Phone Calls',
+            total_value: totalGbpPhone
           },
           {
             type: 'Organic Clicks',
-            total_value: Math.round(avgOrganicClicks * 6)
+            total_value: totalOrganic
           }
         ]
       }
