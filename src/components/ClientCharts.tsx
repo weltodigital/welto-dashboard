@@ -2315,7 +2315,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
                 {mapImage ? (
                   <div className="border rounded-lg overflow-hidden">
                     <img
-                      src={`http://localhost:5001${mapImage}`}
+                      src={mapImage}
                       alt="Map Pack Position"
                       className="w-full h-auto max-h-[700px] object-contain"
                     />
