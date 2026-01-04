@@ -10,11 +10,17 @@ export const supabase = createClient(supabaseUrl, supabaseServiceKey);
 export class DatabaseService {
   // Users
   async getUser(where: any) {
+    console.log('DatabaseService.getUser called with:', where);
+    console.log('Supabase URL:', supabaseUrl);
+    console.log('Supabase Service Key exists:', !!supabaseServiceKey);
+
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .match(where)
       .single();
+
+    console.log('Supabase getUser result:', { data: !!data, error: error?.message || 'No error' });
 
     if (error && error.code !== 'PGRST116') {
       throw error;
