@@ -71,9 +71,17 @@ export async function GET(
     const lead_value = clientData.lead_value || 2500; // Default £2500
     const conversion_rate = clientData.conversion_rate || 50; // Default 50%
 
-    // Get previous month (December if current month is January)
+    // Get previous month (December 2024 since current month is January 2025)
     const now = new Date();
-    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    let previousMonth;
+
+    if (now.getMonth() === 0) {
+      // Current month is January, so previous month is December of previous year
+      previousMonth = new Date(now.getFullYear() - 1, 11, 1); // December of previous year
+    } else {
+      previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    }
+
     const previousMonthStr = `${previousMonth.getFullYear()}-${String(previousMonth.getMonth() + 1).padStart(2, '0')}`;
 
     console.log('Previous month for calculations:', previousMonthStr);
@@ -119,6 +127,23 @@ export async function GET(
     // Get previous month name for display
     const previousMonthName = previousMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+    // Find the earliest date from all metrics to determine start date
+    const allDates = metricsData?.map(m => {
+      // Handle both YYYY-MM and YYYY-MM-DD formats
+      const dateStr = m.date.includes('-01') ? m.date : m.date + '-01';
+      return new Date(dateStr);
+    }).filter(d => !isNaN(d.getTime())) || [];
+
+    const startDate = allDates.length > 0
+      ? new Date(Math.min(...allDates.map(d => d.getTime())))
+      : null;
+
+    const startDateDisplay = startDate && !isNaN(startDate.getTime())
+      ? startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : 'No data available';
+
+    console.log('Start date calculated:', startDateDisplay);
+
     const leadPotential = {
       client_id,
       lead_value,
@@ -143,6 +168,7 @@ export async function GET(
         ]
       },
       since_start: {
+        start_date: startDateDisplay,
         total_clicks: sinceStartTotalClicks,
         total_value: Math.round(sinceStartRevenue),
         breakdown: [
