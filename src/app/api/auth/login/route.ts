@@ -5,6 +5,10 @@ import { signToken } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Login attempt started');
+    console.log('Supabase URL:', process.env.SUPABASE_URL);
+    console.log('Supabase Service Key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
     const { username, password } = await request.json();
 
     if (!username || !password) {
@@ -14,7 +18,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Attempting to get user:', username);
     const user = await db.getUser({ username });
+    console.log('User found:', !!user);
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
       return NextResponse.json(
@@ -40,9 +46,13 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error: error
+    });
     return NextResponse.json(
-      { error: 'Database error' },
+      { error: 'Database error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
