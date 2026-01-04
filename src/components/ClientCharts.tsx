@@ -121,6 +121,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
   const [searchQueries, setSearchQueries] = useState<SearchQuery[]>([]);
   const [topPages, setTopPages] = useState<TopPage[]>([]);
   const [uploadingCsv, setUploadingCsv] = useState(false);
+  const [deletingGscData, setDeletingGscData] = useState(false);
   const [csvPeriod, setCsvPeriod] = useState<string>('');
   const [csvDataType, setCsvDataType] = useState<'queries' | 'pages'>('queries');
   const [selectedCsvFile, setSelectedCsvFile] = useState<File | null>(null);
@@ -976,6 +977,54 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
       alert('Failed to upload CSV file');
     } finally {
       setUploadingCsv(false);
+    }
+  };
+
+  const handleDeleteGscData = async () => {
+    if (!selectedGscPeriod) {
+      alert('Please select a period to delete');
+      return;
+    }
+
+    const dataTypeName = activeGscTab === 'pages' ? 'top pages' : 'search queries';
+    const periodName = new Date(selectedGscPeriod + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    if (!confirm(`Are you sure you want to delete all ${dataTypeName} data for ${periodName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingGscData(true);
+
+    try {
+      const endpoint = activeGscTab === 'pages' ? 'top-pages' : 'search-queries';
+      const response = await fetch(`/api/admin/clients/${client.client_id}/${endpoint}/${selectedGscPeriod}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(result.message);
+
+        // Refresh the data and reset period selection
+        if (activeGscTab === 'pages') {
+          await fetchTopPages();
+        } else {
+          await fetchSearchQueries();
+        }
+        setSelectedGscPeriod('');
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Delete failed');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(`Failed to delete ${dataTypeName} data`);
+    } finally {
+      setDeletingGscData(false);
     }
   };
 
@@ -1999,6 +2048,19 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
                         ))}
                       </select>
                     </div>
+
+                    {/* Delete Button */}
+                    {selectedGscPeriod && (
+                      <button
+                        onClick={handleDeleteGscData}
+                        disabled={deletingGscData}
+                        className="flex items-center gap-1 px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                        title={`Delete all ${activeGscTab === 'pages' ? 'top pages' : 'search queries'} data for selected month`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        {deletingGscData ? 'Deleting...' : 'Delete Month'}
+                      </button>
+                    )}
                   </div>
                 </div>
 
