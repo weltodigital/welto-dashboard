@@ -56,13 +56,14 @@ export async function POST(
     console.log('Converted to base64, length:', base64.length);
 
     // Update the client with the map image
+    console.log('Updating client with client_id:', client_id);
     const { data, error } = await supabase
       .from('users')
       .update({
         map_image: dataUrl,
         updated_at: new Date().toISOString()
       })
-      .eq('id', parseInt(client_id))
+      .eq('client_id', client_id)
       .eq('role', 'client')
       .select()
       .single();
