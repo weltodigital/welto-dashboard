@@ -55,17 +55,21 @@ export async function POST(
     console.log('First 3 data rows:', dataRows.slice(0, 3));
 
     if (dataType === 'queries') {
-      // Find column indices dynamically
-      const queryIndex = headers.findIndex(h => h.toLowerCase().includes('query'));
+      // Find column indices dynamically - handle Google Search Console format
+      const queryIndex = headers.findIndex(h => {
+        const lower = h.toLowerCase();
+        return lower.includes('query') || lower.includes('top queries');
+      });
       const clicksIndex = headers.findIndex(h => h.toLowerCase().includes('clicks'));
       const impressionsIndex = headers.findIndex(h => h.toLowerCase().includes('impressions'));
       const positionIndex = headers.findIndex(h => h.toLowerCase().includes('position'));
 
       console.log('Column mapping for queries:', { queryIndex, clicksIndex, impressionsIndex, positionIndex });
+      console.log('Available headers:', headers);
 
       if (queryIndex === -1 || clicksIndex === -1 || impressionsIndex === -1 || positionIndex === -1) {
         return NextResponse.json(
-          { error: 'Required columns not found. Expected: Query, Clicks, Impressions, Position' },
+          { error: `Required columns not found. Found headers: ${headers.join(', ')}. Expected: Top queries, Clicks, Impressions, Position` },
           { status: 400 }
         );
       }
@@ -102,17 +106,21 @@ export async function POST(
         }
       }
     } else if (dataType === 'pages') {
-      // Find column indices dynamically
-      const pageIndex = headers.findIndex(h => h.toLowerCase().includes('page'));
+      // Find column indices dynamically - handle Google Search Console format
+      const pageIndex = headers.findIndex(h => {
+        const lower = h.toLowerCase();
+        return lower.includes('page') || lower.includes('top pages');
+      });
       const clicksIndex = headers.findIndex(h => h.toLowerCase().includes('clicks'));
       const impressionsIndex = headers.findIndex(h => h.toLowerCase().includes('impressions'));
       const positionIndex = headers.findIndex(h => h.toLowerCase().includes('position'));
 
       console.log('Column mapping for pages:', { pageIndex, clicksIndex, impressionsIndex, positionIndex });
+      console.log('Available headers:', headers);
 
       if (pageIndex === -1 || clicksIndex === -1 || impressionsIndex === -1 || positionIndex === -1) {
         return NextResponse.json(
-          { error: 'Required columns not found. Expected: Page, Clicks, Impressions, Position' },
+          { error: `Required columns not found. Found headers: ${headers.join(', ')}. Expected: Top pages, Clicks, Impressions, Position` },
           { status: 400 }
         );
       }
