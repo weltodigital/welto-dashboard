@@ -4,7 +4,7 @@ import { getUserFromRequest } from '@/lib/jwt';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ client_id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -16,8 +16,8 @@ export async function DELETE(
       );
     }
 
-    const { id } = await params;
-    const clientId = parseInt(id);
+    const { client_id } = await params;
+    const clientId = parseInt(client_id);
 
     // Get client info first
     const client = await db.getUser({ id: clientId, role: 'client' });
@@ -45,7 +45,7 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ client_id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -57,8 +57,8 @@ export async function PUT(
       );
     }
 
-    const { id } = await params;
-    const clientId = parseInt(id);
+    const { client_id } = await params;
+    const clientId = parseInt(client_id);
     const updates = await request.json();
 
     await db.updateUser(clientId, {

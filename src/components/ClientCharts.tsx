@@ -311,7 +311,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setLeadValueLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}`, {
+      const response = await fetch(`/api/admin/clients/${client.client_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -353,7 +353,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setConversionRateLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}`, {
+      const response = await fetch(`/api/admin/clients/${client.client_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -389,7 +389,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setReviewsStartLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}`, {
+      const response = await fetch(`/api/admin/clients/${client.client_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -774,7 +774,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
   const saveNotes = async () => {
     setNotesLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}`, {
+      const response = await fetch(`/api/admin/clients/${client.client_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -817,7 +817,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
       const formData = new FormData();
       formData.append('image', selectedFile);
 
-      const response = await fetch(`/api/admin/clients/${client.id}/map-image`, {
+      const response = await fetch(`/api/admin/clients/${client.client_id}/map-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
