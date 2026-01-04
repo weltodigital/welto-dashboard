@@ -52,14 +52,33 @@ export async function POST(
     console.log('Data Type:', dataType);
     console.log('Period:', period);
     console.log('Client ID:', client_id);
+    console.log('First 3 data rows:', dataRows.slice(0, 3));
 
     if (dataType === 'queries') {
+      // Find column indices dynamically
+      const queryIndex = headers.findIndex(h => h.toLowerCase().includes('query'));
+      const clicksIndex = headers.findIndex(h => h.toLowerCase().includes('clicks'));
+      const impressionsIndex = headers.findIndex(h => h.toLowerCase().includes('impressions'));
+      const positionIndex = headers.findIndex(h => h.toLowerCase().includes('position'));
+
+      console.log('Column mapping for queries:', { queryIndex, clicksIndex, impressionsIndex, positionIndex });
+
+      if (queryIndex === -1 || clicksIndex === -1 || impressionsIndex === -1 || positionIndex === -1) {
+        return NextResponse.json(
+          { error: 'Required columns not found. Expected: Query, Clicks, Impressions, Position' },
+          { status: 400 }
+        );
+      }
+
       // Process search queries
       for (const line of dataRows) {
         const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
 
-        if (values.length >= 4) {
-          const [query, clicks, impressions, position] = values;
+        if (values.length > Math.max(queryIndex, clicksIndex, impressionsIndex, positionIndex)) {
+          const query = values[queryIndex];
+          const clicks = values[clicksIndex];
+          const impressions = values[impressionsIndex];
+          const position = values[positionIndex];
 
           if (query && clicks && impressions && position) {
             const { error } = await supabase
@@ -83,12 +102,30 @@ export async function POST(
         }
       }
     } else if (dataType === 'pages') {
+      // Find column indices dynamically
+      const pageIndex = headers.findIndex(h => h.toLowerCase().includes('page'));
+      const clicksIndex = headers.findIndex(h => h.toLowerCase().includes('clicks'));
+      const impressionsIndex = headers.findIndex(h => h.toLowerCase().includes('impressions'));
+      const positionIndex = headers.findIndex(h => h.toLowerCase().includes('position'));
+
+      console.log('Column mapping for pages:', { pageIndex, clicksIndex, impressionsIndex, positionIndex });
+
+      if (pageIndex === -1 || clicksIndex === -1 || impressionsIndex === -1 || positionIndex === -1) {
+        return NextResponse.json(
+          { error: 'Required columns not found. Expected: Page, Clicks, Impressions, Position' },
+          { status: 400 }
+        );
+      }
+
       // Process top pages
       for (const line of dataRows) {
         const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
 
-        if (values.length >= 4) {
-          const [page_url, clicks, impressions, position] = values;
+        if (values.length > Math.max(pageIndex, clicksIndex, impressionsIndex, positionIndex)) {
+          const page_url = values[pageIndex];
+          const clicks = values[clicksIndex];
+          const impressions = values[impressionsIndex];
+          const position = values[positionIndex];
 
           if (page_url && clicks && impressions && position) {
             const { error } = await supabase
