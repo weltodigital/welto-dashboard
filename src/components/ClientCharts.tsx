@@ -311,7 +311,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setLeadValueLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}/lead-value`, {
+      const response = await fetch(`/api/admin/clients/${client.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -353,7 +353,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setConversionRateLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}/conversion-rate`, {
+      const response = await fetch(`/api/admin/clients/${client.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -389,7 +389,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
 
     setReviewsStartLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}/reviews-start-count`, {
+      const response = await fetch(`/api/admin/clients/${client.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -774,7 +774,7 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
   const saveNotes = async () => {
     setNotesLoading(true);
     try {
-      const response = await fetch(`/api/admin/clients/${client.id}/notes`, {
+      const response = await fetch(`/api/admin/clients/${client.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
