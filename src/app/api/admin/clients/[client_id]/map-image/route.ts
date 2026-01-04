@@ -23,6 +23,8 @@ export async function POST(
 
     const { client_id } = await params;
     console.log('Uploading map image for client:', client_id);
+    console.log('client_id type:', typeof client_id);
+    console.log('client_id value:', JSON.stringify(client_id));
 
     console.log('Attempting to parse FormData...');
     const formData = await request.formData();
@@ -57,16 +59,54 @@ export async function POST(
 
     // Update the client with the map image
     console.log('Updating client with client_id:', client_id);
+    console.log('Update data:', {
+      map_image: dataUrl.substring(0, 50) + '...',
+      updated_at: new Date().toISOString(),
+      client_id,
+      role: 'client'
+    });
+
+    // First, find the client to get their ID
+    const { data: clientData, error: findError } = await supabase
+      .from('users')
+      .select('id, client_id, role')
+      .eq('client_id', client_id)
+      .eq('role', 'client')
+      .single();
+
+    console.log('Find client result:', { clientData, findError: findError?.message });
+
+    if (findError) {
+      console.error('Error finding client:', findError);
+      return NextResponse.json(
+        { error: `Client lookup failed: ${findError.message}` },
+        { status: 500 }
+      );
+    }
+
+    if (!clientData) {
+      console.log('No client found with client_id:', client_id);
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log('Found client:', clientData);
+
+    // Now update using the numeric ID
     const { data, error } = await supabase
       .from('users')
       .update({
         map_image: dataUrl,
         updated_at: new Date().toISOString()
       })
-      .eq('client_id', client_id)
-      .eq('role', 'client')
+      .eq('id', clientData.id)
       .select()
       .single();
+
+    console.log('Database operation completed');
+    console.log('Update result:', { data: !!data, error: error?.message });
 
     if (error) {
       console.error('Database update error:', error);
