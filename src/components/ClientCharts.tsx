@@ -834,12 +834,14 @@ export default function ClientCharts({ client, onBack, token }: ClientChartsProp
         // Update the client object to reflect the change
         client.map_image = result.map_image;
       } else {
-        const error = await response.json();
-        alert(`Failed to upload map image: ${error.error}`);
+        const errorData = await response.json();
+        console.error('Map upload API error:', errorData);
+        alert(`Failed to upload map image: ${errorData.details || errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error uploading map image:', error);
-      alert('Failed to upload map image');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to upload map image: ${errorMessage}`);
     } finally {
       setMapLoading(false);
     }

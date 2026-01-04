@@ -7,9 +7,14 @@ export async function POST(
   { params }: { params: Promise<{ client_id: string }> }
 ) {
   try {
+    console.log('Map image upload started');
+    console.log('Request headers:', Object.fromEntries(request.headers.entries()));
+
     const user = getUserFromRequest(request);
+    console.log('User authentication:', { user: !!user, role: user?.role });
 
     if (!user || user.role !== 'admin') {
+      console.log('Authentication failed - Admin access required');
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -19,17 +24,27 @@ export async function POST(
     const { client_id } = await params;
     console.log('Uploading map image for client:', client_id);
 
+    console.log('Attempting to parse FormData...');
     const formData = await request.formData();
+    console.log('FormData parsed successfully');
+
+    // Debug: log all form data entries
+    for (const [key, value] of formData.entries()) {
+      console.log('FormData entry:', key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
+    }
+
     const imageFile = formData.get('image') as File;
+    console.log('Image file from FormData:', imageFile);
 
     if (!imageFile) {
+      console.log('No image file found in FormData');
       return NextResponse.json(
         { error: 'Image file is required' },
         { status: 400 }
       );
     }
 
-    console.log('Image file received:', imageFile.name, 'size:', imageFile.size);
+    console.log('Image file received:', imageFile.name, 'size:', imageFile.size, 'type:', imageFile.type);
 
     // Convert file to base64 for storage
     const bytes = await imageFile.arrayBuffer();
