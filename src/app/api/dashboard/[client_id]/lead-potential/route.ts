@@ -85,6 +85,7 @@ export async function GET(
       : 0;
 
     // Calculate potential leads and revenue
+    // Note: conversion_rate is stored as percentage (e.g., 50) but calculated as decimal (0.5)
     const totalClicks = avgGbpClicks + avgOrganicClicks;
     const potentialLeads = totalClicks * (conversion_rate / 100);
     const monthlyRevenue = potentialLeads * lead_value;
@@ -106,6 +107,7 @@ export async function GET(
     const currentMonth = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
     // Calculate current month totals
+    // total_value should be the final calculated revenue, not clicks
     const currentMonthValue = Math.round(monthlyRevenue);
 
     // Calculate since start totals (simplified - could be enhanced with actual start date)
