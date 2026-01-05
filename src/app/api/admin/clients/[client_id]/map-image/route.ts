@@ -106,15 +106,18 @@ export async function POST(
     console.log('Found client:', clientData);
 
     // Now update using the numeric ID
+    // For now, only update the existing map_image field until schema is updated
     const updateData: any = {
-      map_images: dataUrls,
       updated_at: new Date().toISOString()
     };
 
-    // Keep backward compatibility with single image field
+    // Store first image in existing map_image field for now
     if (dataUrls.length > 0) {
       updateData.map_image = dataUrls[0];
     }
+
+    // TODO: Add map_images field to database schema, then uncomment:
+    // updateData.map_images = dataUrls;
 
     const { data, error } = await supabase
       .from('users')
@@ -141,14 +144,16 @@ export async function POST(
       );
     }
 
-    console.log('Map images uploaded successfully for client:', client_id);
+    console.log('Map image uploaded successfully for client:', client_id);
 
     return NextResponse.json({
-      message: `${dataUrls.length} map image(s) uploaded successfully`,
-      map_images: dataUrls,
+      message: dataUrls.length > 1
+        ? `${dataUrls.length} images received, first image saved (multi-image support pending database update)`
+        : 'Map image uploaded successfully',
       map_image: dataUrls[0], // Keep backward compatibility
       imageUrl: dataUrls[0], // Keep backward compatibility
-      count: dataUrls.length
+      count: dataUrls.length,
+      note: dataUrls.length > 1 ? 'Only first image saved until database schema supports multiple images' : undefined
     });
 
   } catch (error) {
