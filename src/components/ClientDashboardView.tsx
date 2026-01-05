@@ -349,12 +349,27 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-text-dark">Your SEO Dashboard</h2>
-        <p className="text-gray-700">Track your website's performance and growth</p>
+        <p className="text-gray-700">Track your website and GBP's performance and growth</p>
       </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">{error}</p>
+        </div>
+      )}
+
+      {/* Notes Section */}
+      {clientData?.notes && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-text-dark mb-3 flex items-center">
+            <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Notes from WELTO
+          </h3>
+          <div className="bg-white rounded-lg p-4 border border-blue-100">
+            <p className="text-gray-700 whitespace-pre-wrap">{clientData.notes}</p>
+          </div>
         </div>
       )}
 
@@ -373,7 +388,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                   From {leadPotential.current_month.total_clicks.toLocaleString()} total clicks and phone calls
                 </p>
                 <p className="text-sm text-gray-500">
-                  Based on £{leadPotential.lead_value.toLocaleString()} estimated lead value at {leadPotential.conversion_rate}% conversion rate
+                  Based on £{leadPotential.lead_value.toLocaleString()} estimated job value at {leadPotential.conversion_rate}% conversion rate
                 </p>
               </div>
 
@@ -386,7 +401,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                   From {leadPotential.since_start.total_clicks.toLocaleString()} total clicks and phone calls since {leadPotential.since_start.start_date}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Based on £{leadPotential.lead_value.toLocaleString()} estimated lead value at {leadPotential.conversion_rate}% conversion rate
+                  Based on £{leadPotential.lead_value.toLocaleString()} estimated job value at {leadPotential.conversion_rate}% conversion rate
                 </p>
               </div>
             </div>
