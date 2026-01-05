@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, User, Calendar, Trash2, Plus, X } from 'lucide-react';
+import { TrendingUp, User, Calendar, Trash2, Plus, X, Edit3 } from 'lucide-react';
 import ClientCharts from './ClientCharts';
 
 interface Client {
@@ -31,6 +31,13 @@ export default function ClientList({ token }: ClientListProps) {
     start_date: ''
   });
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    username: '',
+    client_id: '',
+    password: ''
+  });
 
   useEffect(() => {
     fetchClients();
@@ -75,6 +82,57 @@ export default function ClientList({ token }: ClientListProps) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete client');
+    }
+  };
+
+  const startEditClient = (client: Client) => {
+    setEditingClient(client);
+    setEditFormData({
+      username: client.username,
+      client_id: client.client_id,
+      password: '' // Don't pre-fill password for security
+    });
+    setShowEditForm(true);
+  };
+
+  const cancelEditClient = () => {
+    setEditingClient(null);
+    setEditFormData({ username: '', client_id: '', password: '' });
+    setShowEditForm(false);
+  };
+
+  const updateClient = async () => {
+    if (!editingClient) return;
+
+    try {
+      const updateData: any = {
+        username: editFormData.username,
+        client_id: editFormData.client_id
+      };
+
+      // Only include password if it's been set
+      if (editFormData.password.trim()) {
+        updateData.password = editFormData.password;
+      }
+
+      const response = await fetch(`/api/admin/clients/${editingClient.client_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (response.ok) {
+        fetchClients(); // Refresh the client list
+        cancelEditClient();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update client');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update client');
     }
   };
 
@@ -254,6 +312,62 @@ export default function ClientList({ token }: ClientListProps) {
         </div>
       )}
 
+      {/* Edit Client Modal */}
+      {showEditForm && editingClient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-text-dark mb-4">Edit Client</h3>
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input
+                  type="text"
+                  value={editFormData.username}
+                  onChange={(e) => setEditFormData({ ...editFormData, username: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                <input
+                  type="text"
+                  value={editFormData.client_id}
+                  onChange={(e) => setEditFormData({ ...editFormData, client_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={editFormData.password}
+                  onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-green-600"
+                  placeholder="Leave blank to keep current password"
+                />
+                <p className="text-xs text-gray-500 mt-1">Leave empty to keep current password</p>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={cancelEditClient}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={updateClient}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {clients.length === 0 ? (
         <div className="bg-white p-8 rounded-lg border border-gray-200 text-center">
           <User className="w-12 h-12 text-gray-300 mx-auto mb-4" />
@@ -274,15 +388,26 @@ export default function ClientList({ token }: ClientListProps) {
                     <p className="text-sm text-gray-700">{client.username}</p>
                   </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteConfirm(client.id);
-                  }}
-                  className="text-red-500 hover:text-red-700 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditClient(client);
+                    }}
+                    className="text-green-600 hover:text-green-800 transition-colors"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteConfirm(client.id);
+                    }}
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center text-sm text-gray-700 mb-4">
