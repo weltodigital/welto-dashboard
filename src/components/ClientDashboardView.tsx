@@ -358,43 +358,37 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
         </div>
       )}
 
-      {/* Lead Potential Overview */}
+      {/* Estimated Lead Value */}
       {leadPotential && (
         <div className="space-y-6">
-          {/* Settings Display */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-text-dark mb-4">Lead Generation Settings</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-xl font-semibold text-text-dark mb-6">Estimated Lead Value</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <span className="text-sm text-gray-600">Lead Value:</span>
-                <span className="ml-2 text-lg font-semibold text-emerald-600">£{leadPotential.lead_value.toLocaleString()}</span>
+                <h4 className="text-lg font-semibold text-text-dark mb-2">{leadPotential.current_month.month}</h4>
+                <div className="text-3xl font-bold text-emerald-600 mb-2">
+                  £{leadPotential.current_month.total_value.toLocaleString()}
+                </div>
+                <p className="text-gray-700 mb-1">
+                  From {leadPotential.current_month.total_clicks.toLocaleString()} total clicks and phone calls
+                </p>
+                <p className="text-sm text-gray-500">
+                  Based on £{leadPotential.lead_value.toLocaleString()} estimated lead value at {leadPotential.conversion_rate}% conversion rate
+                </p>
               </div>
+
               <div>
-                <span className="text-sm text-gray-600">Conversion Rate:</span>
-                <span className="ml-2 text-lg font-semibold text-emerald-600">{leadPotential.conversion_rate}%</span>
+                <h4 className="text-lg font-semibold text-text-dark mb-2">Total Value Since Started with WELTO</h4>
+                <div className="text-3xl font-bold text-primary-blue mb-2">
+                  £{leadPotential.since_start.total_value.toLocaleString()}
+                </div>
+                <p className="text-gray-700 mb-1">
+                  From {leadPotential.since_start.total_clicks.toLocaleString()} total clicks and phone calls since {leadPotential.since_start.start_date}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Based on £{leadPotential.lead_value.toLocaleString()} estimated lead value at {leadPotential.conversion_rate}% conversion rate
+                </p>
               </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-text-dark mb-4">{leadPotential.current_month.month}</h3>
-              <div className="text-3xl font-bold text-emerald-600 mb-2">
-                £{leadPotential.current_month.total_value.toLocaleString()}
-              </div>
-              <p className="text-gray-700">
-                From {leadPotential.current_month.total_clicks.toLocaleString()} total clicks and phone calls
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-text-dark mb-4">Total Value Since Started with WELTO</h3>
-              <div className="text-3xl font-bold text-primary-blue mb-2">
-                £{leadPotential.since_start.total_value.toLocaleString()}
-              </div>
-              <p className="text-gray-700">
-                From {leadPotential.since_start.total_clicks.toLocaleString()} total clicks and phone calls since {leadPotential.since_start.start_date}
-              </p>
             </div>
           </div>
         </div>
