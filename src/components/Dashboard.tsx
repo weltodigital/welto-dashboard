@@ -22,7 +22,6 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ user, onLogout }: DashboardProps) {
-  const clientId = user.role === 'client' ? user.client_id : 'CLIENT001';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -43,7 +42,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
               {user.role === 'client' && (
                 <span className="ml-4 px-3 py-1 bg-primary-blue text-white text-sm rounded-full">
-                  Client: {clientId}
+                  Client: {user.username}
                 </span>
               )}
             </div>
@@ -72,7 +71,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           <ClientList token={localStorage.getItem('token') || ''} />
         ) : (
           <ClientDashboardView
-            clientId={clientId || ''}
+            username={user.username}
             token={localStorage.getItem('token') || ''}
           />
         )}

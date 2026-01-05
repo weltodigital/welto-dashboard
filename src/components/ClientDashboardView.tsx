@@ -83,7 +83,7 @@ interface LeadPotentialData {
 }
 
 interface ClientDashboardViewProps {
-  clientId: string;
+  username: string;
   token: string;
 }
 
@@ -99,7 +99,7 @@ interface ChartData {
   [key: string]: string | number | undefined;
 }
 
-export default function ClientDashboardView({ clientId, token }: ClientDashboardViewProps) {
+export default function ClientDashboardView({ username, token }: ClientDashboardViewProps) {
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [searchQueries, setSearchQueries] = useState<SearchQuery[]>([]);
   const [topPages, setTopPages] = useState<TopPage[]>([]);
@@ -122,16 +122,20 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
     try {
       setLoading(true);
 
-      // Fetch client data
-      const clientResponse = await fetch(`/api/admin/clients/${clientId}`, {
+      // First, get the client_id from the username
+      const clientResponse = await fetch(`/api/admin/clients-by-username/${username}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (clientResponse.ok) {
-        const clientResult = await clientResponse.json();
-        setClientData(clientResult);
+
+      if (!clientResponse.ok) {
+        throw new Error('Failed to fetch client data');
       }
 
-      // Fetch metrics
+      const clientResult = await clientResponse.json();
+      setClientData(clientResult);
+      const clientId = clientResult.client_id;
+
+      // Fetch metrics using the resolved client_id
       const metricsResponse = await fetch(`/api/dashboard/${clientId}/metrics`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -176,7 +180,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
     } finally {
       setLoading(false);
     }
-  }, [clientId, token]);
+  }, [username, token]);
 
   useEffect(() => {
     fetchData();
