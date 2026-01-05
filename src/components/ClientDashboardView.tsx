@@ -23,6 +23,7 @@ interface Client {
   start_date?: string;
   notes?: string;
   map_image?: string;
+  map_images?: string[];
   reviews_start_count?: number;
 }
 
@@ -107,6 +108,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [mapImageModalOpen, setMapImageModalOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Google Search Console states
   const [activeGscTab, setActiveGscTab] = useState<'queries' | 'pages'>('queries');
@@ -933,54 +935,153 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
         </div>
       )}
 
-      {/* Map Pack Ranking Image */}
-      {clientData?.map_image && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-text-dark mb-4 flex items-center">
-            <MapPin className="w-5 h-5 mr-2" />
-            Map Pack Ranking
-          </h3>
-          <div
-            className="cursor-pointer transition-transform hover:scale-[1.02]"
-            onClick={() => setMapImageModalOpen(true)}
-          >
-            <img
-              src={clientData.map_image}
-              alt="Map Pack Ranking"
-              className="w-full max-w-md mx-auto rounded-lg shadow-md"
-            />
-            <p className="text-sm text-gray-500 text-center mt-2">Click to enlarge</p>
+      {/* Map Pack Ranking Images */}
+      {(() => {
+        const mapImages = clientData?.map_images?.length
+          ? clientData.map_images
+          : clientData?.map_image
+            ? [clientData.map_image]
+            : [];
+
+        if (mapImages.length === 0) return null;
+
+        return (
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-text-dark mb-4 flex items-center">
+              <MapPin className="w-5 h-5 mr-2" />
+              Map Pack Ranking {mapImages.length > 1 && `(${mapImages.length} images)`}
+            </h3>
+            {mapImages.length === 1 ? (
+              <div
+                className="cursor-pointer transition-transform hover:scale-[1.02]"
+                onClick={() => {
+                  setSelectedImageIndex(0);
+                  setMapImageModalOpen(true);
+                }}
+              >
+                <img
+                  src={mapImages[0]}
+                  alt="Map Pack Ranking"
+                  className="w-full max-w-md mx-auto rounded-lg shadow-md"
+                />
+                <p className="text-sm text-gray-500 text-center mt-2">Click to enlarge</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {mapImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className="cursor-pointer transition-transform hover:scale-[1.02]"
+                    onClick={() => {
+                      setSelectedImageIndex(index);
+                      setMapImageModalOpen(true);
+                    }}
+                  >
+                    <img
+                      src={image}
+                      alt={`Map Pack Ranking ${index + 1}`}
+                      className="w-full h-40 object-cover rounded-lg shadow-md"
+                    />
+                    <p className="text-xs text-gray-500 text-center mt-1">Image {index + 1}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Map Image Modal */}
-      {mapImageModalOpen && clientData?.map_image && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setMapImageModalOpen(false)}
-        >
+      {mapImageModalOpen && (() => {
+        const mapImages = clientData?.map_images?.length
+          ? clientData.map_images
+          : clientData?.map_image
+            ? [clientData.map_image]
+            : [];
+
+        if (mapImages.length === 0) return null;
+
+        const currentImage = mapImages[selectedImageIndex];
+        const canNavigate = mapImages.length > 1;
+
+        const nextImage = () => {
+          setSelectedImageIndex((prev) => (prev + 1) % mapImages.length);
+        };
+
+        const prevImage = () => {
+          setSelectedImageIndex((prev) => (prev - 1 + mapImages.length) % mapImages.length);
+        };
+
+        return (
           <div
-            className="bg-white rounded-lg p-4 max-w-4xl max-h-full overflow-auto"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setMapImageModalOpen(false)}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-text-dark">Map Pack Ranking</h3>
-              <button
-                onClick={() => setMapImageModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700 text-xl"
-              >
-                ×
-              </button>
+            <div
+              className="bg-white rounded-lg p-4 max-w-4xl max-h-full overflow-auto relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-text-dark">
+                  Map Pack Ranking
+                  {canNavigate && (
+                    <span className="text-sm font-normal text-gray-500 ml-2">
+                      {selectedImageIndex + 1} of {mapImages.length}
+                    </span>
+                  )}
+                </h3>
+                <button
+                  onClick={() => setMapImageModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="relative">
+                <img
+                  src={currentImage}
+                  alt={`Map Pack Ranking ${selectedImageIndex + 1}`}
+                  className="w-full h-auto rounded-lg"
+                />
+
+                {canNavigate && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                    >
+                      →
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {canNavigate && (
+                <div className="flex justify-center mt-4 space-x-2">
+                  {mapImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`w-3 h-3 rounded-full transition-colors ${
+                        index === selectedImageIndex
+                          ? 'bg-blue-600'
+                          : 'bg-gray-300 hover:bg-gray-400'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            <img
-              src={clientData.map_image}
-              alt="Map Pack Ranking - Enlarged"
-              className="w-full h-auto rounded-lg"
-            />
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

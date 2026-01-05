@@ -104,12 +104,6 @@ export default function Login({ onLogin, isLoading = false, error }: LoginProps)
           </button>
         </form>
 
-        {/* Demo Credentials */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <p className="text-sm font-medium text-text-dark mb-2">Demo Credentials:</p>
-          <p className="text-xs text-gray-700">Client: <span className="font-mono">client1 / client123</span></p>
-          <p className="text-xs text-gray-700">Admin: <span className="font-mono">admin / admin123</span></p>
-        </div>
 
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-700">

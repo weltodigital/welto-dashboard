@@ -35,32 +35,43 @@ export async function POST(
       console.log('FormData entry:', key, value instanceof File ? `File: ${value.name} (${value.size} bytes)` : value);
     }
 
-    const imageFile = formData.get('image') as File;
-    console.log('Image file from FormData:', imageFile);
+    // Handle multiple image files
+    const imageFiles = formData.getAll('images') as File[];
+    const singleImageFile = formData.get('image') as File;
 
-    if (!imageFile) {
-      console.log('No image file found in FormData');
+    // Support both single image (legacy) and multiple images
+    const filesToProcess = imageFiles.length > 0 ? imageFiles : (singleImageFile ? [singleImageFile] : []);
+
+    console.log('Image files to process:', filesToProcess.length);
+
+    if (filesToProcess.length === 0) {
+      console.log('No image files found in FormData');
       return NextResponse.json(
-        { error: 'Image file is required' },
+        { error: 'At least one image file is required' },
         { status: 400 }
       );
     }
 
-    console.log('Image file received:', imageFile.name, 'size:', imageFile.size, 'type:', imageFile.type);
+    // Convert all files to base64 for storage
+    const dataUrls: string[] = [];
+    for (const file of filesToProcess) {
+      console.log('Processing file:', file.name, 'size:', file.size, 'type:', file.type);
 
-    // Convert file to base64 for storage
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64 = buffer.toString('base64');
-    const mimeType = imageFile.type;
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const base64 = buffer.toString('base64');
+      const mimeType = file.type;
+      const dataUrl = `data:${mimeType};base64,${base64}`;
 
-    console.log('Converted to base64, length:', base64.length);
+      dataUrls.push(dataUrl);
+      console.log('Converted file to base64, length:', base64.length);
+    }
 
-    // Update the client with the map image
+    // Update the client with the map images
     console.log('Updating client with client_id:', client_id);
     console.log('Update data:', {
-      map_image: dataUrl.substring(0, 50) + '...',
+      map_images: `${dataUrls.length} images`,
+      map_image: dataUrls[0] ? dataUrls[0].substring(0, 50) + '...' : null, // Keep first image for backward compatibility
       updated_at: new Date().toISOString(),
       client_id,
       role: 'client'
@@ -95,12 +106,19 @@ export async function POST(
     console.log('Found client:', clientData);
 
     // Now update using the numeric ID
+    const updateData: any = {
+      map_images: dataUrls,
+      updated_at: new Date().toISOString()
+    };
+
+    // Keep backward compatibility with single image field
+    if (dataUrls.length > 0) {
+      updateData.map_image = dataUrls[0];
+    }
+
     const { data, error } = await supabase
       .from('users')
-      .update({
-        map_image: dataUrl,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', clientData.id)
       .select()
       .single();
@@ -123,12 +141,14 @@ export async function POST(
       );
     }
 
-    console.log('Map image uploaded successfully for client:', client_id);
+    console.log('Map images uploaded successfully for client:', client_id);
 
     return NextResponse.json({
-      message: 'Map image uploaded successfully',
-      map_image: dataUrl,
-      imageUrl: dataUrl
+      message: `${dataUrls.length} map image(s) uploaded successfully`,
+      map_images: dataUrls,
+      map_image: dataUrls[0], // Keep backward compatibility
+      imageUrl: dataUrls[0], // Keep backward compatibility
+      count: dataUrls.length
     });
 
   } catch (error) {
