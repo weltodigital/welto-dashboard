@@ -2,6 +2,55 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/database';
 import { getUserFromRequest } from '@/lib/jwt';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ client_id: string }> }
+) {
+  try {
+    const user = getUserFromRequest(request);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { client_id } = await params;
+
+    // Check access rights - admins can access any client, clients can only access their own
+    if (user.role !== 'admin' && user.client_id !== client_id) {
+      return NextResponse.json(
+        { error: 'Access denied' },
+        { status: 403 }
+      );
+    }
+
+    // Get client data
+    const { data: client, error: findError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('client_id', client_id)
+      .eq('role', 'client')
+      .single();
+
+    if (findError || !client) {
+      return NextResponse.json(
+        { error: 'Client not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(client);
+  } catch (error) {
+    console.error('Error fetching client:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch client data' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ client_id: string }> }

@@ -103,12 +103,23 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
   const [searchQueries, setSearchQueries] = useState<SearchQuery[]>([]);
   const [topPages, setTopPages] = useState<TopPage[]>([]);
   const [leadPotential, setLeadPotential] = useState<LeadPotentialData | null>(null);
+  const [clientData, setClientData] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [mapImageModalOpen, setMapImageModalOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Fetch client data
+      const clientResponse = await fetch(`/api/admin/clients/${clientId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (clientResponse.ok) {
+        const clientResult = await clientResponse.json();
+        setClientData(clientResult);
+      }
 
       // Fetch metrics
       const metricsResponse = await fetch(`/api/dashboard/${clientId}/metrics`, {
@@ -209,25 +220,42 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
 
       {/* Lead Potential Overview */}
       {leadPotential && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          {/* Settings Display */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-text-dark mb-4">This Month's Value</h3>
-            <div className="text-3xl font-bold text-emerald-600 mb-2">
-              ${leadPotential.current_month.total_value.toLocaleString()}
+            <h3 className="text-lg font-semibold text-text-dark mb-4">Lead Generation Settings</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <span className="text-sm text-gray-600">Lead Value:</span>
+                <span className="ml-2 text-lg font-semibold text-emerald-600">£{leadPotential.lead_value.toLocaleString()}</span>
+              </div>
+              <div>
+                <span className="text-sm text-gray-600">Conversion Rate:</span>
+                <span className="ml-2 text-lg font-semibold text-emerald-600">{leadPotential.conversion_rate}%</span>
+              </div>
             </div>
-            <p className="text-gray-700">
-              From {leadPotential.current_month.total_clicks.toLocaleString()} total clicks
-            </p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-semibold text-text-dark mb-4">Total Value Since Start</h3>
-            <div className="text-3xl font-bold text-primary-blue mb-2">
-              ${leadPotential.since_start.total_value.toLocaleString()}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-text-dark mb-4">{leadPotential.current_month.month}</h3>
+              <div className="text-3xl font-bold text-emerald-600 mb-2">
+                £{leadPotential.current_month.total_value.toLocaleString()}
+              </div>
+              <p className="text-gray-700">
+                From {leadPotential.current_month.total_clicks.toLocaleString()} total clicks
+              </p>
             </div>
-            <p className="text-gray-700">
-              From {leadPotential.since_start.total_clicks.toLocaleString()} total clicks
-            </p>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-text-dark mb-4">Total Value Since Started with WELTO</h3>
+              <div className="text-3xl font-bold text-primary-blue mb-2">
+                £{leadPotential.since_start.total_value.toLocaleString()}
+              </div>
+              <p className="text-gray-700">
+                From {leadPotential.since_start.total_clicks.toLocaleString()} total clicks since {leadPotential.since_start.start_date}
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -306,10 +334,10 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
             </div>
           )}
 
-          {/* Organic Search Performance */}
-          {chartData.some(d => d.gsc_organic_clicks || d.gsc_organic_impressions) && (
+          {/* Organic Search Clicks */}
+          {chartData.some(d => d.gsc_organic_clicks) && (
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-semibold text-text-dark mb-4">Organic Search Performance</h3>
+              <h3 className="text-lg font-semibold text-text-dark mb-4">Organic Search Clicks</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -325,6 +353,24 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                       name="Organic Clicks"
                       strokeWidth={2}
                     />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Organic Search Impressions */}
+          {chartData.some(d => d.gsc_organic_impressions) && (
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h3 className="text-lg font-semibold text-text-dark mb-4">Organic Search Impressions</h3>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={formatTooltip} />
+                    <Legend />
                     <Line
                       type="monotone"
                       dataKey="gsc_organic_impressions"
@@ -390,6 +436,55 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Map Pack Ranking Image */}
+      {clientData?.map_image && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-lg font-semibold text-text-dark mb-4 flex items-center">
+            <MapPin className="w-5 h-5 mr-2" />
+            Map Pack Ranking
+          </h3>
+          <div
+            className="cursor-pointer transition-transform hover:scale-[1.02]"
+            onClick={() => setMapImageModalOpen(true)}
+          >
+            <img
+              src={clientData.map_image}
+              alt="Map Pack Ranking"
+              className="w-full max-w-md mx-auto rounded-lg shadow-md"
+            />
+            <p className="text-sm text-gray-500 text-center mt-2">Click to enlarge</p>
+          </div>
+        </div>
+      )}
+
+      {/* Map Image Modal */}
+      {mapImageModalOpen && clientData?.map_image && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setMapImageModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg p-4 max-w-4xl max-h-full overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-text-dark">Map Pack Ranking</h3>
+              <button
+                onClick={() => setMapImageModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ×
+              </button>
+            </div>
+            <img
+              src={clientData.map_image}
+              alt="Map Pack Ranking - Enlarged"
+              className="w-full h-auto rounded-lg"
+            />
           </div>
         </div>
       )}

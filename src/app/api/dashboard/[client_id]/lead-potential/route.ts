@@ -56,7 +56,7 @@ export async function GET(
       .from('metrics')
       .select('metric_type, value, date')
       .eq('client_id', client_id)
-      .in('metric_type', ['gbp_website_clicks', 'gbp_phone_calls', 'gsc_organic_clicks'])
+      .in('metric_type', ['gbp_website_clicks', 'gbp_calls', 'gsc_organic_clicks'])
       .order('date', { ascending: false });
 
     if (metricsError) {
@@ -88,7 +88,7 @@ export async function GET(
 
     // Filter metrics by type
     const gbpWebClicks = metricsData?.filter(m => m.metric_type === 'gbp_website_clicks') || [];
-    const gbpPhoneCalls = metricsData?.filter(m => m.metric_type === 'gbp_phone_calls') || [];
+    const gbpPhoneCalls = metricsData?.filter(m => m.metric_type === 'gbp_calls') || [];
     const organicClicks = metricsData?.filter(m => m.metric_type === 'gsc_organic_clicks') || [];
 
     // Get previous month data
@@ -158,7 +158,7 @@ export async function GET(
             total_value: prevMonthGbpWeb
           },
           {
-            type: 'GBP Phone Calls',
+            type: 'GBP Calls',
             total_value: prevMonthGbpPhone
           },
           {
@@ -177,7 +177,7 @@ export async function GET(
             total_value: totalGbpWeb
           },
           {
-            type: 'GBP Phone Calls',
+            type: 'GBP Calls',
             total_value: totalGbpPhone
           },
           {
