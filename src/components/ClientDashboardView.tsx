@@ -742,10 +742,10 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
             {activeGscTab === 'pages' && topPages.length > 0 && (
               <div>
                 <div className="overflow-x-auto" data-table-container>
-                  <table className="w-full table-auto">
+                  <table className="w-full table-fixed">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left p-3">
+                        <th className="text-left p-3 w-2/5">
                           <button
                             onClick={() => handleSort('page_url')}
                             className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
@@ -756,7 +756,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             )}
                           </button>
                         </th>
-                        <th className="text-left p-3">
+                        <th className="text-left p-3 w-1/6">
                           <button
                             onClick={() => handleSort('clicks')}
                             className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
@@ -767,7 +767,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             )}
                           </button>
                         </th>
-                        <th className="text-left p-3">
+                        <th className="text-left p-3 w-1/6">
                           <button
                             onClick={() => handleSort('impressions')}
                             className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
@@ -778,7 +778,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             )}
                           </button>
                         </th>
-                        <th className="text-left p-3">
+                        <th className="text-left p-3 w-1/6">
                           <button
                             onClick={() => handleSort('position')}
                             className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
@@ -789,7 +789,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             )}
                           </button>
                         </th>
-                        <th className="text-left p-3 text-sm font-medium text-gray-700">Period</th>
+                        <th className="text-left p-3 w-1/6 text-sm font-medium text-gray-700">Period</th>
                       </tr>
                     </thead>
                     <tbody>
