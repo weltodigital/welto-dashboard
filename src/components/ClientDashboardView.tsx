@@ -186,8 +186,25 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
       data[metric.metric_type as keyof ChartData] = metric.value;
     });
 
-    return Array.from(dataMap.values()).sort((a, b) => a.month.localeCompare(b.month));
-  }, [metrics]);
+    // Calculate cumulative reviews
+    const reviewsStartCount = clientData?.reviews_start_count || 0;
+    let cumulativeReviews = reviewsStartCount;
+
+    let sortedData = Array.from(dataMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+
+    // Add cumulative reviews calculation
+    sortedData = sortedData.map(item => {
+      if (item.gbp_reviews) {
+        cumulativeReviews += item.gbp_reviews;
+      }
+      return {
+        ...item,
+        gbp_reviews_cumulative: cumulativeReviews
+      };
+    });
+
+    return sortedData;
+  }, [metrics, clientData?.reviews_start_count]);
 
   const formatTooltip = (value: any, name: string | undefined) => {
     const formatValue = (val: number) => {
@@ -243,7 +260,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                 £{leadPotential.current_month.total_value.toLocaleString()}
               </div>
               <p className="text-gray-700">
-                From {leadPotential.current_month.total_clicks.toLocaleString()} total clicks
+                From {leadPotential.current_month.total_clicks.toLocaleString()} total clicks and phone calls
               </p>
             </div>
 
@@ -253,7 +270,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                 £{leadPotential.since_start.total_value.toLocaleString()}
               </div>
               <p className="text-gray-700">
-                From {leadPotential.since_start.total_clicks.toLocaleString()} total clicks since {leadPotential.since_start.start_date}
+                From {leadPotential.since_start.total_clicks.toLocaleString()} total clicks and phone calls since {leadPotential.since_start.start_date}
               </p>
             </div>
           </div>
