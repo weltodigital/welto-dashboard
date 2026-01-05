@@ -801,7 +801,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                         return (
                           <tr key={`${page.page_url}-${page.period}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="p-3">
-                              <div className="font-medium text-text-dark truncate max-w-xs">{page.page_url}</div>
+                              <div className="font-medium text-text-dark">{page.page_url}</div>
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
