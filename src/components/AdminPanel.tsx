@@ -34,9 +34,12 @@ export default function AdminPanel({ token }: AdminPanelProps) {
   const [showMetricForm, setShowMetricForm] = useState(false);
   const [showCharts, setShowCharts] = useState(false);
   const [showStartDateForm, setShowStartDateForm] = useState(false);
+  const [showEditClientForm, setShowEditClientForm] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [startDate, setStartDate] = useState('');
 
   const [newClient, setNewClient] = useState({ username: '', password: '', client_id: '', start_date: '' });
+  const [editClientForm, setEditClientForm] = useState({ username: '', client_id: '', password: '' });
   const [editingNotes, setEditingNotes] = useState<{ [key: number]: boolean }>({});
   const [notesText, setNotesText] = useState<{ [key: number]: string }>({});
   const [newMetric, setNewMetric] = useState({ metric_type: '', value: '', month: '' });
@@ -113,6 +116,51 @@ export default function AdminPanel({ token }: AdminPanelProps) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete client');
+    }
+  };
+
+  const startEditClient = (client: Client) => {
+    setEditingClient(client);
+    setEditClientForm({
+      username: client.username,
+      client_id: client.client_id,
+      password: '' // Don't pre-fill password for security
+    });
+    setShowEditClientForm(true);
+  };
+
+  const cancelEditClient = () => {
+    setEditingClient(null);
+    setEditClientForm({ username: '', client_id: '', password: '' });
+    setShowEditClientForm(false);
+  };
+
+  const updateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClient) return;
+
+    try {
+      const updateData: any = {
+        username: editClientForm.username,
+        client_id: editClientForm.client_id
+      };
+
+      // Only include password if it's been set
+      if (editClientForm.password.trim()) {
+        updateData.password = editClientForm.password;
+      }
+
+      await apiCall(`/clients/${editingClient.client_id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updateData),
+      });
+
+      setEditClientForm({ username: '', client_id: '', password: '' });
+      setShowEditClientForm(false);
+      setEditingClient(null);
+      fetchClients();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update client');
     }
   };
 
@@ -294,6 +342,64 @@ export default function AdminPanel({ token }: AdminPanelProps) {
           </div>
         )}
 
+        {/* Edit Client Form */}
+        {showEditClientForm && editingClient && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <h4 className="text-lg font-medium text-text-dark mb-4">Edit Client: {editingClient.username}</h4>
+            <form onSubmit={updateClient} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <input
+                    type="text"
+                    value={editClientForm.username}
+                    onChange={(e) => setEditClientForm({ ...editClientForm, username: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                  <input
+                    type="text"
+                    value={editClientForm.client_id}
+                    onChange={(e) => setEditClientForm({ ...editClientForm, client_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
+                    placeholder="e.g., CLIENT002"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={editClientForm.password}
+                    onChange={(e) => setEditClientForm({ ...editClientForm, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
+                    placeholder="Leave blank to keep current password"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave empty to keep current password</p>
+                </div>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Update Client
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditClient}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -354,13 +460,19 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                   </td>
                   <td className="px-6 py-4 text-sm space-x-2">
                     <button
+                      onClick={() => startEditClient(client)}
+                      className="text-green-600 hover:text-green-800"
+                    >
+                      <Edit3 className="w-4 h-4 inline" /> Edit
+                    </button>
+                    <button
                       onClick={() => {
                         setSelectedClient(client);
                         fetchClientMetrics(client.client_id);
                       }}
                       className="text-primary-blue hover:text-light-blue"
                     >
-                      <Edit3 className="w-4 h-4 inline" /> Manage Data
+                      <BarChart3 className="w-4 h-4 inline" /> Manage Data
                     </button>
                     <button
                       onClick={() => deleteClient(client.id)}
