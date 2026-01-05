@@ -108,6 +108,14 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
   const [error, setError] = useState('');
   const [mapImageModalOpen, setMapImageModalOpen] = useState(false);
 
+  // Google Search Console states
+  const [activeGscTab, setActiveGscTab] = useState<'queries' | 'pages'>('queries');
+  const [selectedGscPeriod, setSelectedGscPeriod] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50);
+  const [sortField, setSortField] = useState<string>('clicks');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -205,6 +213,121 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
 
     return sortedData;
   }, [metrics, clientData?.reviews_start_count]);
+
+  // Helper functions for Google Search Console
+  const getMostRecentPeriod = useCallback(() => {
+    const allPeriods = Array.from(new Set([
+      ...searchQueries.map(q => q.period),
+      ...topPages.map(p => p.period)
+    ]));
+    if (allPeriods.length === 0) return '';
+    return allPeriods.sort((a, b) => b.localeCompare(a))[0];
+  }, [searchQueries, topPages]);
+
+  const getPreviousMonthPeriod = (currentPeriod: string): string => {
+    const [year, month] = currentPeriod.split('-').map(Number);
+    const prevDate = new Date(year, month - 2, 1); // month - 2 because Date month is 0-indexed
+    return `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const getComparisonData = useCallback((currentItem: any, field: string) => {
+    const previousPeriod = getPreviousMonthPeriod(selectedGscPeriod);
+    if (!previousPeriod) return null;
+
+    const data = activeGscTab === 'queries' ? searchQueries : topPages;
+    const keyField = activeGscTab === 'queries' ? 'query' : 'page_url';
+
+    const previousItem = data.find(
+      item => {
+        return item[keyField as keyof typeof item] === currentItem[keyField] && item.period === previousPeriod;
+      }
+    );
+
+    if (!previousItem) return null;
+
+    const currentValue = currentItem[field];
+    const previousValue = previousItem[field];
+    const change = currentValue - previousValue;
+    const percentChange = previousValue > 0 ? (change / previousValue) * 100 : 0;
+
+    return {
+      change,
+      percentChange,
+      isIncrease: change > 0,
+      isDecrease: change < 0,
+      previousValue
+    };
+  }, [selectedGscPeriod, searchQueries, topPages, activeGscTab]);
+
+  // Set most recent period as default when data is loaded
+  useEffect(() => {
+    if ((searchQueries.length > 0 || topPages.length > 0) && !selectedGscPeriod) {
+      const mostRecent = getMostRecentPeriod();
+      if (mostRecent) {
+        setSelectedGscPeriod(mostRecent);
+      }
+    }
+  }, [searchQueries, topPages, selectedGscPeriod, getMostRecentPeriod]);
+
+  // Reset sorting and pagination when switching tabs
+  useEffect(() => {
+    setSortField('clicks');
+    setSortDirection('desc');
+    setCurrentPage(1);
+  }, [activeGscTab]);
+
+  const handlePeriodFilter = useCallback((period: string) => {
+    setSelectedGscPeriod(period);
+    setCurrentPage(1);
+  }, []);
+
+  const handleTabSwitch = useCallback((tab: 'queries' | 'pages') => {
+    setActiveGscTab(tab);
+  }, []);
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+    setCurrentPage(1);
+  };
+
+  const getSortedData = () => {
+    const data = activeGscTab === 'queries' ? searchQueries : topPages;
+    const filteredData = selectedGscPeriod ? data.filter(item => item.period === selectedGscPeriod) : data;
+    return [...filteredData].sort((a: any, b: any) => {
+      let aValue = a[sortField];
+      let bValue = b[sortField];
+
+      if (sortField === 'query' || sortField === 'page_url') {
+        aValue = String(aValue).toLowerCase();
+        bValue = String(bValue).toLowerCase();
+      } else {
+        aValue = Number(aValue) || 0;
+        bValue = Number(bValue) || 0;
+      }
+
+      if (aValue === bValue) return 0;
+
+      const comparison = aValue < bValue ? -1 : 1;
+      return sortDirection === 'desc' ? -comparison : comparison;
+    });
+  };
+
+  const getPaginatedData = () => {
+    const sortedData = getSortedData();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedData.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const sortedData = getSortedData();
+    return Math.ceil(sortedData.length / itemsPerPage);
+  };
 
   const formatTooltip = (value: any, name: string | undefined) => {
     const formatValue = (val: number) => {
@@ -409,50 +532,358 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
         </div>
       )}
 
-      {/* Top Search Queries */}
-      {searchQueries.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-text-dark mb-4 flex items-center">
-            <Search className="w-5 h-5 mr-2" />
-            Top Search Queries
-          </h3>
-          <div className="space-y-3">
-            {searchQueries.slice(0, 10).map((query, index) => (
-              <div key={query.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium text-text-dark">{query.query}</p>
-                  <p className="text-sm text-gray-700">Position: {query.position.toFixed(1)}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-text-dark">{query.clicks} clicks</p>
-                  <p className="text-sm text-gray-700">{query.impressions.toLocaleString()} impressions</p>
+      {/* Google Search Console Data */}
+      {(searchQueries.length > 0 || topPages.length > 0) && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="border-b border-gray-200">
+            <div className="flex justify-between items-center p-6 pb-0">
+              <div className="flex items-center">
+                <Search className="w-5 h-5 text-primary-blue mr-2" />
+                <h3 className="text-lg font-semibold text-text-dark">Google Search Console Data</h3>
+              </div>
+              <div className="flex items-center gap-4">
+                {/* Month Filter */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Filter by month:</label>
+                  <select
+                    value={selectedGscPeriod}
+                    onChange={(e) => handlePeriodFilter(e.target.value)}
+                    className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary-blue"
+                  >
+                    <option value="">All months</option>
+                    {Array.from(new Set([
+                      ...searchQueries.map(q => q.period),
+                      ...topPages.map(p => p.period)
+                    ])).sort((a, b) => b.localeCompare(a)).map(period => (
+                      <option key={period} value={period}>
+                        {new Date(period + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            </div>
 
-      {/* Top Pages */}
-      {topPages.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-text-dark mb-4 flex items-center">
-            <Eye className="w-5 h-5 mr-2" />
-            Top Performing Pages
-          </h3>
-          <div className="space-y-3">
-            {topPages.slice(0, 10).map((page, index) => (
-              <div key={page.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium text-text-dark truncate">{page.page_url}</p>
-                  <p className="text-sm text-gray-700">Position: {page.position.toFixed(1)}</p>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200">
+              <button
+                onClick={() => handleTabSwitch('queries')}
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeGscTab === 'queries'
+                    ? 'border-primary-blue text-primary-blue'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Search Queries ({searchQueries.filter(q => selectedGscPeriod ? q.period === selectedGscPeriod : true).length})
+              </button>
+              <button
+                onClick={() => handleTabSwitch('pages')}
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeGscTab === 'pages'
+                    ? 'border-primary-blue text-primary-blue'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Top Pages ({topPages.filter(p => selectedGscPeriod ? p.period === selectedGscPeriod : true).length})
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeGscTab === 'queries' && searchQueries.length > 0 && (
+              <div>
+                <div className="overflow-x-auto" data-table-container>
+                  <table className="w-full table-auto">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('query')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Query
+                            {sortField === 'query' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('clicks')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Clicks
+                            {sortField === 'clicks' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('impressions')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Impressions
+                            {sortField === 'impressions' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('position')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Position
+                            {sortField === 'position' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3 text-sm font-medium text-gray-700">Period</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getPaginatedData().map((query: any, index: number) => {
+                        const clicksComparison = getComparisonData(query, 'clicks');
+                        const impressionsComparison = getComparisonData(query, 'impressions');
+                        const positionComparison = getComparisonData(query, 'position');
+
+                        return (
+                          <tr key={`${query.query}-${query.period}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="p-3">
+                              <div className="font-medium text-text-dark">{query.query}</div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-primary-blue">{query.clicks}</span>
+                                {clicksComparison && (
+                                  <span className={`text-xs flex items-center ${
+                                    clicksComparison.isIncrease ? 'text-green-600' : clicksComparison.isDecrease ? 'text-red-600' : 'text-gray-500'
+                                  }`}>
+                                    {clicksComparison.isIncrease ? '↗' : clicksComparison.isDecrease ? '↙' : '→'} {Math.abs(clicksComparison.change)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span>{query.impressions.toLocaleString()}</span>
+                                {impressionsComparison && (
+                                  <span className={`text-xs flex items-center ${
+                                    impressionsComparison.isIncrease ? 'text-green-600' : impressionsComparison.isDecrease ? 'text-red-600' : 'text-gray-500'
+                                  }`}>
+                                    {impressionsComparison.isIncrease ? '↗' : impressionsComparison.isDecrease ? '↙' : '→'} {Math.abs(impressionsComparison.change)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span>{query.position.toFixed(1)}</span>
+                                {positionComparison && (
+                                  <span className={`text-xs flex items-center ${
+                                    positionComparison.isDecrease ? 'text-green-600' : positionComparison.isIncrease ? 'text-red-600' : 'text-gray-500'
+                                  }`}>
+                                    {positionComparison.isDecrease ? '↗' : positionComparison.isIncrease ? '↙' : '→'} {Math.abs(positionComparison.change).toFixed(1)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-sm text-gray-600">
+                              {new Date(query.period + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-text-dark">{page.clicks} clicks</p>
-                  <p className="text-sm text-gray-700">{page.impressions.toLocaleString()} impressions</p>
-                </div>
+
+                {/* Pagination */}
+                {getTotalPages() > 1 && (
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm text-gray-700">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, getSortedData().length)} of {getSortedData().length} results
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-3 py-1 text-sm">
+                        Page {currentPage} of {getTotalPages()}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(getTotalPages(), currentPage + 1))}
+                        disabled={currentPage === getTotalPages()}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
+            )}
+
+            {activeGscTab === 'pages' && topPages.length > 0 && (
+              <div>
+                <div className="overflow-x-auto" data-table-container>
+                  <table className="w-full table-auto">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('page_url')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Page URL
+                            {sortField === 'page_url' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('clicks')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Clicks
+                            {sortField === 'clicks' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('impressions')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Impressions
+                            {sortField === 'impressions' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3">
+                          <button
+                            onClick={() => handleSort('position')}
+                            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900"
+                          >
+                            Position
+                            {sortField === 'position' && (
+                              <span className="ml-1">{sortDirection === 'desc' ? '↓' : '↑'}</span>
+                            )}
+                          </button>
+                        </th>
+                        <th className="text-left p-3 text-sm font-medium text-gray-700">Period</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getPaginatedData().map((page: any, index: number) => {
+                        const clicksComparison = getComparisonData(page, 'clicks');
+                        const impressionsComparison = getComparisonData(page, 'impressions');
+                        const positionComparison = getComparisonData(page, 'position');
+
+                        return (
+                          <tr key={`${page.page_url}-${page.period}-${index}`} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="p-3">
+                              <div className="font-medium text-text-dark truncate max-w-xs">{page.page_url}</div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-primary-blue">{page.clicks}</span>
+                                {clicksComparison && (
+                                  <span className={`text-xs flex items-center ${
+                                    clicksComparison.isIncrease ? 'text-green-600' : clicksComparison.isDecrease ? 'text-red-600' : 'text-gray-500'
+                                  }`}>
+                                    {clicksComparison.isIncrease ? '↗' : clicksComparison.isDecrease ? '↙' : '→'} {Math.abs(clicksComparison.change)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span>{page.impressions.toLocaleString()}</span>
+                                {impressionsComparison && (
+                                  <span className={`text-xs flex items-center ${
+                                    impressionsComparison.isIncrease ? 'text-green-600' : impressionsComparison.isDecrease ? 'text-red-600' : 'text-gray-500'
+                                  }`}>
+                                    {impressionsComparison.isIncrease ? '↗' : impressionsComparison.isDecrease ? '↙' : '→'} {Math.abs(impressionsComparison.change)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span>{page.position.toFixed(1)}</span>
+                                {positionComparison && (
+                                  <span className={`text-xs flex items-center ${
+                                    positionComparison.isDecrease ? 'text-green-600' : positionComparison.isIncrease ? 'text-red-600' : 'text-gray-500'
+                                  }`}>
+                                    {positionComparison.isDecrease ? '↗' : positionComparison.isIncrease ? '↙' : '→'} {Math.abs(positionComparison.change).toFixed(1)}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-3 text-sm text-gray-600">
+                              {new Date(page.period + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {getTotalPages() > 1 && (
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm text-gray-700">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, getSortedData().length)} of {getSortedData().length} results
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Previous
+                      </button>
+                      <span className="px-3 py-1 text-sm">
+                        Page {currentPage} of {getTotalPages()}
+                      </span>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(getTotalPages(), currentPage + 1))}
+                        disabled={currentPage === getTotalPages()}
+                        className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {((activeGscTab === 'queries' && searchQueries.filter(q => selectedGscPeriod ? q.period === selectedGscPeriod : true).length === 0) ||
+              (activeGscTab === 'pages' && topPages.filter(p => selectedGscPeriod ? p.period === selectedGscPeriod : true).length === 0)) && (
+              <div className="text-center py-8">
+                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-700 mb-2">
+                  No {activeGscTab === 'queries' ? 'search queries' : 'top pages'} data available{selectedGscPeriod && ' for the selected month'}.
+                </p>
+                <p className="text-sm text-gray-700">
+                  Your Google Search Console data will appear here once uploaded by your team.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
