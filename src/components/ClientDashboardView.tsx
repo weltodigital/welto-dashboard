@@ -121,28 +121,41 @@ export default function ClientDashboardView({ username, token }: ClientDashboard
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('Fetching data for username:', username);
 
       // First, get the client_id from the username
       const clientResponse = await fetch(`/api/admin/clients-by-username/${username}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
+      console.log('Client response status:', clientResponse.status);
+
       if (!clientResponse.ok) {
-        throw new Error('Failed to fetch client data');
+        const errorData = await clientResponse.json();
+        console.error('Client fetch error:', errorData);
+        throw new Error(`Failed to fetch client data: ${errorData.error || clientResponse.statusText}`);
       }
 
       const clientResult = await clientResponse.json();
+      console.log('Client result:', clientResult);
       setClientData(clientResult);
       const clientId = clientResult.client_id;
+      console.log('Resolved clientId:', clientId);
 
       // Fetch metrics using the resolved client_id
       const metricsResponse = await fetch(`/api/dashboard/${clientId}/metrics`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
+      console.log('Metrics response status:', metricsResponse.status);
+
       if (metricsResponse.ok) {
         const metricsData = await metricsResponse.json();
+        console.log('Metrics data:', metricsData);
         setMetrics(metricsData);
+      } else {
+        const metricsError = await metricsResponse.json();
+        console.error('Metrics fetch error:', metricsError);
       }
 
       // Fetch search queries
@@ -170,12 +183,19 @@ export default function ClientDashboardView({ username, token }: ClientDashboard
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
+      console.log('Lead potential response status:', leadResponse.status);
+
       if (leadResponse.ok) {
         const leadData = await leadResponse.json();
+        console.log('Lead potential data:', leadData);
         setLeadPotential(leadData);
+      } else {
+        const leadError = await leadResponse.json();
+        console.error('Lead potential fetch error:', leadError);
       }
 
     } catch (err) {
+      console.error('fetchData error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
       setLoading(false);
