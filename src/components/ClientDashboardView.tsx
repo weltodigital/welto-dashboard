@@ -373,6 +373,43 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
         </div>
       )}
 
+      {/* Start Date & Days Since Starting */}
+      {clientData && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-text-dark mb-2 flex items-center">
+                <Calendar className="w-5 h-5 text-blue-600 mr-2" />
+                Started with WELTO
+              </h3>
+              <div className="text-2xl font-bold text-blue-600">
+                {clientData.start_date
+                  ? new Date(clientData.start_date).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })
+                  : new Date(clientData.created_at).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })
+                }
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-600 mb-1">Days with WELTO</p>
+              <div className="text-3xl font-bold text-emerald-600">
+                {Math.floor(
+                  (new Date().getTime() - new Date(clientData.start_date || clientData.created_at).getTime())
+                  / (1000 * 60 * 60 * 24)
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Estimated Lead Value */}
       {leadPotential && (
         <div className="space-y-6">
