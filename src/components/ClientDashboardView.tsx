@@ -239,14 +239,14 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
 
     const previousItem = data.find(
       item => {
-        return item[keyField as keyof typeof item] === currentItem[keyField] && item.period === previousPeriod;
+        return (item as any)[keyField] === currentItem[keyField] && item.period === previousPeriod;
       }
     );
 
     if (!previousItem) return null;
 
-    const currentValue = currentItem[field];
-    const previousValue = previousItem[field];
+    const currentValue = (currentItem as any)[field];
+    const previousValue = (previousItem as any)[field];
     const change = currentValue - previousValue;
     const percentChange = previousValue > 0 ? (change / previousValue) * 100 : 0;
 
