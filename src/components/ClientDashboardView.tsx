@@ -297,7 +297,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
 
   const getSortedData = () => {
     const data = activeGscTab === 'queries' ? searchQueries : topPages;
-    const filteredData = selectedGscPeriod ? data.filter(item => item.period === selectedGscPeriod) : data;
+    const filteredData = data.filter(item => item.period === selectedGscPeriod);
     return [...filteredData].sort((a: any, b: any) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
@@ -550,7 +550,6 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                     onChange={(e) => handlePeriodFilter(e.target.value)}
                     className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary-blue"
                   >
-                    <option value="">All months</option>
                     {Array.from(new Set([
                       ...searchQueries.map(q => q.period),
                       ...topPages.map(p => p.period)
@@ -574,7 +573,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Search Queries ({searchQueries.filter(q => selectedGscPeriod ? q.period === selectedGscPeriod : true).length})
+                Search Queries ({searchQueries.filter(q => q.period === selectedGscPeriod).length})
               </button>
               <button
                 onClick={() => handleTabSwitch('pages')}
@@ -584,7 +583,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Top Pages ({topPages.filter(p => selectedGscPeriod ? p.period === selectedGscPeriod : true).length})
+                Top Pages ({topPages.filter(p => p.period === selectedGscPeriod).length})
               </button>
             </div>
           </div>
@@ -669,7 +668,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <span>{query.impressions.toLocaleString()}</span>
+                                <span className="font-medium text-primary-blue">{query.impressions.toLocaleString()}</span>
                                 {impressionsComparison && (
                                   <span className={`text-xs flex items-center ${
                                     impressionsComparison.isIncrease ? 'text-green-600' : impressionsComparison.isDecrease ? 'text-red-600' : 'text-gray-500'
@@ -681,7 +680,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <span>{query.position.toFixed(1)}</span>
+                                <span className="font-medium text-primary-blue">{query.position.toFixed(1)}</span>
                                 {positionComparison && (
                                   <span className={`text-xs flex items-center ${
                                     positionComparison.isDecrease ? 'text-green-600' : positionComparison.isIncrease ? 'text-red-600' : 'text-gray-500'
@@ -809,7 +808,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <span>{page.impressions.toLocaleString()}</span>
+                                <span className="font-medium text-primary-blue">{page.impressions.toLocaleString()}</span>
                                 {impressionsComparison && (
                                   <span className={`text-xs flex items-center ${
                                     impressionsComparison.isIncrease ? 'text-green-600' : impressionsComparison.isDecrease ? 'text-red-600' : 'text-gray-500'
@@ -821,7 +820,7 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-2">
-                                <span>{page.position.toFixed(1)}</span>
+                                <span className="font-medium text-primary-blue">{page.position.toFixed(1)}</span>
                                 {positionComparison && (
                                   <span className={`text-xs flex items-center ${
                                     positionComparison.isDecrease ? 'text-green-600' : positionComparison.isIncrease ? 'text-red-600' : 'text-gray-500'
@@ -872,12 +871,12 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
             )}
 
             {/* Empty State */}
-            {((activeGscTab === 'queries' && searchQueries.filter(q => selectedGscPeriod ? q.period === selectedGscPeriod : true).length === 0) ||
-              (activeGscTab === 'pages' && topPages.filter(p => selectedGscPeriod ? p.period === selectedGscPeriod : true).length === 0)) && (
+            {((activeGscTab === 'queries' && searchQueries.filter(q => q.period === selectedGscPeriod).length === 0) ||
+              (activeGscTab === 'pages' && topPages.filter(p => p.period === selectedGscPeriod).length === 0)) && (
               <div className="text-center py-8">
                 <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-700 mb-2">
-                  No {activeGscTab === 'queries' ? 'search queries' : 'top pages'} data available{selectedGscPeriod && ' for the selected month'}.
+                  No {activeGscTab === 'queries' ? 'search queries' : 'top pages'} data available for the selected month.
                 </p>
                 <p className="text-sm text-gray-700">
                   Your Google Search Console data will appear here once uploaded by your team.
