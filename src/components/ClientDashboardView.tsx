@@ -937,11 +937,25 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
 
       {/* Map Pack Ranking Images */}
       {(() => {
-        const mapImages = clientData?.map_images?.length
-          ? clientData.map_images
-          : clientData?.map_image
-            ? [clientData.map_image]
-            : [];
+        let mapImages: string[] = [];
+
+        if (clientData?.map_images?.length) {
+          // If map_images array exists, use it
+          mapImages = clientData.map_images;
+        } else if (clientData?.map_image) {
+          // Check if map_image contains JSON array (multiple images) or single image
+          try {
+            const parsed = JSON.parse(clientData.map_image);
+            if (Array.isArray(parsed)) {
+              mapImages = parsed;
+            } else {
+              mapImages = [clientData.map_image];
+            }
+          } catch {
+            // Not JSON, treat as single image
+            mapImages = [clientData.map_image];
+          }
+        }
 
         if (mapImages.length === 0) return null;
 
@@ -993,11 +1007,25 @@ export default function ClientDashboardView({ clientId, token }: ClientDashboard
 
       {/* Map Image Modal */}
       {mapImageModalOpen && (() => {
-        const mapImages = clientData?.map_images?.length
-          ? clientData.map_images
-          : clientData?.map_image
-            ? [clientData.map_image]
-            : [];
+        let mapImages: string[] = [];
+
+        if (clientData?.map_images?.length) {
+          // If map_images array exists, use it
+          mapImages = clientData.map_images;
+        } else if (clientData?.map_image) {
+          // Check if map_image contains JSON array (multiple images) or single image
+          try {
+            const parsed = JSON.parse(clientData.map_image);
+            if (Array.isArray(parsed)) {
+              mapImages = parsed;
+            } else {
+              mapImages = [clientData.map_image];
+            }
+          } catch {
+            // Not JSON, treat as single image
+            mapImages = [clientData.map_image];
+          }
+        }
 
         if (mapImages.length === 0) return null;
 
